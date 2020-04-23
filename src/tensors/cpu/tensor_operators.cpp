@@ -409,27 +409,29 @@ inline void read_from_dnnl_memory(void *handle, dnnl::memory &mem) {
 template <typename ElementType>
 void Softmax(Tensor out, Tensor in) {
 
+
   using namespace dnnl;
   using tag = memory::format_tag;
   using dt = memory::data_type;
+
   dnnl::engine::kind engine_kind = dnnl::engine::kind::cpu;
   dnnl::engine engine(engine_kind, 0);
   dnnl::stream engine_stream(engine);
 
 
   using namespace functional;
-  functional::Tensor<ElementType> fout = out;
-  const functional::Tensor<ElementType> fin = in;
+  functional::Tensor<ElementType> fout_dnnl = out;
+  const functional::Tensor<ElementType> fin_dnnl = in;
 
-  ElementType* pOut = fout.data();
+  ElementType* pOut_dnnl = fout_dnnl.data();
   //const ElementType* pIn = fin.data();
 
-  int rows = fout.shape().elements() / fout.shape().back();
-  int cols = fout.shape().back();
-  memory::dims src_dims = {rows, cols};
+  int rows_dnnl = fout_dnnl.shape().elements() / fout_dnnl.shape().back();
+  int cols_dnnl = fout_dnnl.shape().back();
+  memory::dims src_dims = {rows_dnnl, cols_dnnl};
   auto src_md = memory::desc(src_dims, dt::f32,tag::ab);
   auto src_mem = memory(src_md, engine);
-  write_to_dnnl_memory(static_cast<const void*>(fin.data()), src_mem);
+  write_to_dnnl_memory(static_cast<const void*>(fin_dnnl.data()), src_mem);
 
     // Softmax axis.
     const int axis = 1;
@@ -450,9 +452,12 @@ void Softmax(Tensor out, Tensor in) {
 
     softmax_prim.execute(engine_stream, softmax_args);
     engine_stream.wait();
-    read_from_dnnl_memory(pOut, src_mem);
+    read_from_dnnl_memory(pOut_dnnl, src_mem);
 
-  /*using namespace functional;
+
+
+
+/*
   functional::Tensor<ElementType> fout = out;
   const functional::Tensor<ElementType> fin = in;
 
@@ -487,8 +492,8 @@ void Softmax(Tensor out, Tensor in) {
     for(int i = 0; i < cols; ++i) {
       so[i] = Ops<ElementType>::div(so[i], sums);
     }
-  }*/
-  
+  }
+  */
 }
 
 
@@ -498,12 +503,14 @@ void Softmax(Tensor out, Tensor in) {
 
 #ifdef __AVX__
   if(out->shape()[-1] % 8 == 0) {
-    Softmax<float32x8>(out, in);
+    //Softmax<float32x8>(out, in);
+    Softmax<float>(out,in);
     return;
   }
 #endif
   if(out->shape()[-1] % 4 == 0) {
-    Softmax<float32x4>(out, in);
+    //Softmax<float32x4>(out, in);
+    Softmax<float>(out, in);
   } else {
     Softmax<float>(out, in);
   }
