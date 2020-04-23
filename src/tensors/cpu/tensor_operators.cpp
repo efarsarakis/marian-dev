@@ -410,11 +410,11 @@ template <typename ElementType>
 void Softmax(Tensor out, Tensor in) {
 
   using namespace dnnl;
-    using tag = memory::format_tag;
-    using dt = memory::data_type;
-    dnnl::engine::kind engine_kind = dnnl::engine::kind::cpu;
-    dnnl::engine engine(engine_kind, 0);
-    dnnl::stream engine_stream(engine);
+  using tag = memory::format_tag;
+  using dt = memory::data_type;
+  dnnl::engine::kind engine_kind = dnnl::engine::kind::cpu;
+  dnnl::engine engine(engine_kind, 0);
+  dnnl::stream engine_stream(engine);
 
 
   using namespace functional;
@@ -424,25 +424,19 @@ void Softmax(Tensor out, Tensor in) {
   ElementType* pOut = fout.data();
   //const ElementType* pIn = fin.data();
 
-  std::cout<<"here 1\n";
   int rows = fout.shape().elements() / fout.shape().back();
   int cols = fout.shape().back();
   memory::dims src_dims = {rows, cols};
   auto src_md = memory::desc(src_dims, dt::f32,tag::ab);
-  std::cout<<"here 2\n";
   auto src_mem = memory(src_md, engine);
-  std::cout<<"here 3\n";
   write_to_dnnl_memory(static_cast<const void*>(fin.data()), src_mem);
 
-  std::cout<<"here 4\n";
     // Softmax axis.
     const int axis = 1;
 
     // Create operation descriptor.
-    auto softmax_d
-            = softmax_forward::desc(prop_kind::forward_inference, src_md, axis);
+    auto softmax_d = softmax_forward::desc(prop_kind::forward_inference, src_md, axis);
 
-  std::cout<<"here 5\n";
     // Create primitive descriptor.
     auto softmax_pd = softmax_forward::primitive_desc(softmax_d, engine);
 
@@ -454,17 +448,9 @@ void Softmax(Tensor out, Tensor in) {
     softmax_args.insert({DNNL_ARG_SRC, src_mem});
     softmax_args.insert({DNNL_ARG_DST, src_mem});
 
-  std::cout<<"here 6\n";
     softmax_prim.execute(engine_stream, softmax_args);
-  std::cout<<"here 7\n";
     engine_stream.wait();
-  std::cout<<"here 8\n";
     read_from_dnnl_memory(pOut, src_mem);
-
-  std::cout<<"here 9\n";
-
-
-
 
   /*using namespace functional;
   functional::Tensor<ElementType> fout = out;
