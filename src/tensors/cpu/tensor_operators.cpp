@@ -501,26 +501,27 @@ void Softmax(Tensor out, Tensor in) {
   matchOrAbort<float>(out->type());
   matchOrAbort<float>(in->type());
 
+  //DNNL cannot support float32x8 and other random types, so - mandating just one type;
+  Softmax<float>(out,in);
+  /*
 #ifdef __AVX__
   if(out->shape()[-1] % 8 == 0) {
-    //Softmax<float32x8>(out, in);
-    Softmax<float>(out,in);
+    Softmax<float32x8>(out, in);
+
     return;
   }
 #endif
   if(out->shape()[-1] % 4 == 0) {
-    //Softmax<float32x4>(out, in);
-    Softmax<float>(out, in);
+    Softmax<float32x4>(out, in);
   } else {
     Softmax<float>(out, in);
-  }
+  }*/
 }
 
 
 
 template <typename ElementType>
 void LogSoftmax(Tensor out, Tensor in) {
-    std::cout<<"Log Softmax\n";
     using namespace dnnl;
     using tag = memory::format_tag;
     using dt = memory::data_type;
